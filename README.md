@@ -1,2 +1,1 @@
-# EPAM-payment-system
-Payment system with custom wallets
+# Payment system with custom wallets
