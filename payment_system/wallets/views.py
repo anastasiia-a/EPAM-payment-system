@@ -60,7 +60,7 @@ def withdrawals(request, wallet_sender: str,
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def operations(request, wallet_id: str, operation: str) -> JsonResponse:
+def operations(request, wallet_id: str, operation: str):
     """Returns operations (deposit/withdrawal/all operations)
     on the desired wallet."""
     operation_cases = (
@@ -77,6 +77,12 @@ def operations(request, wallet_id: str, operation: str) -> JsonResponse:
 
     if operation:
         operations_qs = operations_qs.filter(name=operation)
-    operations_list = list(operations_qs.values())
 
+    filter_ = request.GET.get('filter', None)
+    if filter_ in ('date', '-date'):
+        operations_qs = operations_qs.order_by(filter_)
+    else:
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+
+    operations_list = list(operations_qs.values())
     return JsonResponse(operations_list, safe=False)
