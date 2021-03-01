@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, re_path
 from rest_framework.routers import SimpleRouter
 
-from wallets.views import WalletViewSet, deposits, withdrawals
+from wallets.views import WalletViewSet, deposits, withdrawals, operations
 
 router = SimpleRouter()
 
@@ -26,7 +26,10 @@ router.register(r'wallets', WalletViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path('wallets/(?P<wallet_sender>[0-9]+)/deposits/$', deposits),
-    re_path('wallets/(?P<wallet_sender>[0-9]+)/withdrawals/(?P<wallet_receiver>[0-9]+)/$', withdrawals)
+    re_path('wallets/(?P<wallet_sender>[0-9]+)/withdrawals/'
+            '(?P<wallet_receiver>[0-9]+)/$', withdrawals),
+    re_path('operations/(?P<wallet_id>[0-9]+)/(?P<operation>[a-z]*)/?$',
+            operations),
 ]
 
 urlpatterns += router.urls
