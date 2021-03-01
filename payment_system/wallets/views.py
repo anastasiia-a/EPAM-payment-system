@@ -81,7 +81,7 @@ def operations(request, wallet_id: str, operation: str):
     filter_ = request.GET.get('filter', None)
     if filter_ in ('date', '-date'):
         operations_qs = operations_qs.order_by(filter_)
-    else:
+    elif filter_:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     operations_list = list(operations_qs.values())
