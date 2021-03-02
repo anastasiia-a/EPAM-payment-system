@@ -1,6 +1,8 @@
 import json
 from decimal import Decimal, ROUND_FLOOR
 
+from django.db import transaction
+from django.db.models import F
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -11,11 +13,27 @@ from wallets.models import Wallet, Operation
 from wallets.serializer import WalletSerializer
 
 
+@transaction.non_atomic_requests
 class WalletViewSet(ModelViewSet):
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
 
 
+@transaction.atomic
+def transfer_money(sender, receiver, amount):
+    wallet_receiver = Wallet.objects.filter(pk=receiver)
+    wallet_sender = Wallet.objects.filter(pk=sender)
+    if wallet_receiver.annotate(money=F('balance')).filter(money__gte=amount):
+        Wallet.objects.filter(pk=receiver).update(balance=F('balance') - amount)
+        Wallet.objects.filter(pk=sender).update(balance=F('balance') + amount)
+    else:
+        raise ValueError
+
+    Operation.objects.create(name='withdrawal', wallet=wallet_receiver, amount=amount)
+    Operation.objects.create(name='deposit', wallet=wallet_sender, amount=amount)
+
+
+@transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["POST"])
 def deposits(request, wallet_sender: str) -> HttpResponse:
@@ -26,13 +44,18 @@ def deposits(request, wallet_sender: str) -> HttpResponse:
         data = json.loads(request.body)
         amount = Decimal(data['amount'])
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
-        wallet = Wallet.objects.get(id=wallet_id)
-    except (ValueError, KeyError, Wallet.DoesNotExist):
+        if amount > Decimal("0.00"):
+            Wallet.objects.filter(pk=wallet_id).update(balance=F('balance') + amount)
+            Operation.objects.create(name='deposit', wallet=Wallet.objects.get(pk=wallet_id),
+                                     amount=amount)
+
+    except (ValueError, KeyError, Wallet.DoesNotExist, AttributeError):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)
 
 
+@transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["POST"])
 def withdrawals(request, wallet_sender: str,
@@ -45,14 +68,15 @@ def withdrawals(request, wallet_sender: str,
         data = json.loads(request.body)
         amount = Decimal(data['amount'])
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
-        wallet_sender = Wallet.objects.get(id=wallet_sender)
-        wallet_receiver = Wallet.objects.get(id=wallet_receiver)
-    except (ValueError, KeyError, Wallet.DoesNotExist):
+        if amount > Decimal("0.00"):
+            transfer_money(wallet_sender, wallet_receiver, amount)
+    except (ValueError, KeyError, Wallet.DoesNotExist, AttributeError):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)
 
 
+@transaction.non_atomic_requests
 @require_http_methods(["GET"])
 def operations(request, wallet_id: str, operation: str):
     """Returns operations (deposit/withdrawal/all operations)

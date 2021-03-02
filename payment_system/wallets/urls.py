@@ -4,7 +4,6 @@ from rest_framework.routers import SimpleRouter
 from wallets.views import WalletViewSet, deposits, withdrawals
 
 router = SimpleRouter()
-
 router.register(r'', WalletViewSet)
 
 urlpatterns = [
