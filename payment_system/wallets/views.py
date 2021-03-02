@@ -27,9 +27,7 @@ def deposits(request, wallet_sender: str) -> HttpResponse:
         amount = Decimal(data['amount'])
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
         wallet = Wallet.objects.get(id=wallet_id)
-    except ValueError:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-    except Wallet.DoesNotExist:
+    except (ValueError, KeyError, Wallet.DoesNotExist):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)
@@ -47,18 +45,14 @@ def withdrawals(request, wallet_sender: str,
         data = json.loads(request.body)
         amount = Decimal(data['amount'])
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
-
         wallet_sender = Wallet.objects.get(id=wallet_sender)
         wallet_receiver = Wallet.objects.get(id=wallet_receiver)
-    except ValueError:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-    except Wallet.DoesNotExist:
+    except (ValueError, KeyError, Wallet.DoesNotExist):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 def operations(request, wallet_id: str, operation: str):
     """Returns operations (deposit/withdrawal/all operations)
@@ -68,13 +62,11 @@ def operations(request, wallet_id: str, operation: str):
         'deposit',
         'withdrawal',
     )
-
     if operation not in operation_cases:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     wallet_id = int(wallet_id)
     operations_qs = Operation.objects.filter(wallet=wallet_id)
-
     if operation:
         operations_qs = operations_qs.filter(name=operation)
 

@@ -14,22 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, re_path
-from rest_framework.routers import SimpleRouter
+from django.urls import path, re_path, include
 
-from wallets.views import WalletViewSet, deposits, withdrawals, operations
+import wallets
+from wallets.views import operations
 
-router = SimpleRouter()
-
-router.register(r'wallets', WalletViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path('wallets/(?P<wallet_sender>[0-9]+)/deposits/$', deposits),
-    re_path('wallets/(?P<wallet_sender>[0-9]+)/withdrawals/'
-            '(?P<wallet_receiver>[0-9]+)/$', withdrawals),
+    path('wallets/', include('wallets.urls')),
     re_path('operations/(?P<wallet_id>[0-9]+)/(?P<operation>[a-z]*)/?$',
             operations),
 ]
-
-urlpatterns += router.urls
