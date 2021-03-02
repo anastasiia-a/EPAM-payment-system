@@ -20,26 +20,31 @@ class WalletViewSet(ModelViewSet):
 
 
 @transaction.atomic
-def transfer_money(sender, receiver, amount):
+def transfer_money(sender: str, receiver: str, amount: Decimal) -> None:
+    """Transfers money from the sender's wallet to the receiver's wallet
+    if the sender's wallet balance is greater than or equal to the amount of
+    money entered."""
     wallet_receiver = Wallet.objects.filter(pk=receiver)
     wallet_sender = Wallet.objects.filter(pk=sender)
-    if wallet_receiver.annotate(money=F('balance')).filter(money__gte=amount):
-        Wallet.objects.filter(pk=receiver).update(balance=F('balance') - amount)
-        Wallet.objects.filter(pk=sender).update(balance=F('balance') + amount)
+    if wallet_sender.annotate(money=F('balance')).filter(money__gte=amount):
+        wallet_sender.update(balance=F('balance') - amount)
+        wallet_receiver.update(balance=F('balance') + amount)
     else:
         raise ValueError
 
-    Operation.objects.create(name='withdrawal', wallet=wallet_receiver, amount=amount)
-    Operation.objects.create(name='deposit', wallet=wallet_sender, amount=amount)
+    Operation.objects.create(name='deposit', wallet=wallet_receiver, amount=amount)
+    Operation.objects.create(name='withdrawal', wallet=wallet_sender, amount=amount)
 
 
 @transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["POST"])
-def deposits(request, wallet_sender: str) -> HttpResponse:
+def deposits(request, wallet_receiver: str) -> HttpResponse:
     """Called when requesting to transfer money to
-    the customer's wallet"""
-    wallet_id = int(wallet_sender)
+    the customer's wallet.
+    Returns status 200-OK if it can be done
+    otherwise returns status 400-BAD REQUEST."""
+    wallet_id = int(wallet_receiver)
     try:
         data = json.loads(request.body)
         amount = Decimal(data['amount'])
@@ -61,7 +66,9 @@ def deposits(request, wallet_sender: str) -> HttpResponse:
 def withdrawals(request, wallet_sender: str,
                 wallet_receiver: str) -> HttpResponse:
     """Called when requesting to transfer money to
-    the customer's wallet from another wallet."""
+    the customer's wallet from another wallet.
+    Returns status 200-OK if it can be done
+    otherwise returns status 400-BAD REQUEST."""
     wallet_sender = int(wallet_sender)
     wallet_receiver = int(wallet_receiver)
     try:
@@ -80,7 +87,7 @@ def withdrawals(request, wallet_sender: str,
 @require_http_methods(["GET"])
 def operations(request, wallet_id: str, operation: str):
     """Returns operations (deposit/withdrawal/all operations)
-    on the desired wallet."""
+    on the desired wallet in JSON format."""
     operation_cases = (
         '',
         'deposit',
