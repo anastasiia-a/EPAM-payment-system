@@ -7,7 +7,7 @@ router = SimpleRouter()
 router.register(r'', WalletViewSet)
 
 urlpatterns = [
-    re_path('(?P<wallet_sender>[0-9]+)/deposits/$', deposits),
+    re_path('(?P<wallet_receiver>[0-9]+)/deposits/$', deposits),
     re_path('(?P<wallet_sender>[0-9]+)/withdrawals/'
             '(?P<wallet_receiver>[0-9]+)/$', withdrawals),
 ]
