@@ -16,12 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path, include
 
-from wallets.views import operations
-
+from wallets.views import operations, documentation
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('wallets/', include('wallets.urls')),
     re_path('operations/(?P<wallet_id>[0-9]+)/(?P<operation>[a-z]*)/?$',
             operations),
+    path('', documentation),
 ]

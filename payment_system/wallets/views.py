@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_FLOOR
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import status
@@ -109,3 +110,7 @@ def operations(request, wallet_id: str, operation: str):
 
     operations_list = list(operations_qs.values())
     return JsonResponse(operations_list, safe=False)
+
+
+def documentation(request):
+    return render(request, "index.html")
