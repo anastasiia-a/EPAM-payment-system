@@ -7,12 +7,184 @@
     <link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap.min.css" %}">
     <script type="text/javascript" src="{% static "jquery/jquery-3.5.1min.js" %}"></script>
     <script type="text/javascript" src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Documentation</a>
+            <div class="container">
+                <a class="navbar-brand" href="">
+                    <strong>API Documentation</strong>
+                </a>&nbsp; &nbsp; &nbsp; &nbsp;
+{#                <a class="navbar-text" href="" style="text-decoration: none; color: darkgray">#}
+{#                    <strong>https://nsokolova.samartsev.com</strong>#}
+{#                </a>#}
+            </div>
         </div>
     </nav>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-8">
+          <br><strong style="font-size: 20px">1. Получение информации о всех кошельках.</strong><br>
+            Необходимо выполнить <strong>GET</strong> запрос следующего вида:<br>
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/
+            </li>
+        </div>
+      </div>
+        <hr>
+      <div class="row"><br>
+        <div class="col-8">
+          <strong style="font-size: 20px">2. Получение информации о конкретном кошельке.</strong><br>
+            Необходимо выполнить <strong>GET</strong> запрос следующего вида:<br>
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/<strong>{wallet_id}</strong>/
+            </li><br>
+            <li><strong>WALLET_ID</strong> - ID выбранного кошелька.</li>
+        </div>
+      </div>
+        <hr>
+        <div class="row"><br>
+        <div class="col-8">
+          <strong style="font-size: 20px">3. Добавление нового кошелька.</strong><br>
+            Необходимо выполнить <strong>POST</strong> запрос:<br>
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/
+            </li><br>
+            Передав в <strong>body</strong> следущую структуру:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"name" : "some_name",<br>
+                &nbsp;&nbsp;&nbsp;"client_firstname" : "firstname",<br>
+                &nbsp;&nbsp;&nbsp;"client_surname" : "surname",<br>
+                }
+            </div>
+            <li><strong>NAME</strong> - название кошелька;</li>
+            <li><strong>CLIENT_FIRSTNAME</strong> - имя клиента;</li>
+            <li><strong>CLIENT_SURNAME</strong> - фамилия клиента.</li>
+        </div>
+      </div>
+        <hr>
+
+        <div class="row">
+        <div class="col-8"><br>
+          <strong style="font-size: 20px">4. Изменение информации о кошельке.</strong><br>
+            Необходимо выполнить <strong>POST</strong> запрос:
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/<strong>{wallet_id}</strong>/
+            </li><br>
+            Передав в <strong>body</strong> следущую структуру:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"name" : "new_name",<br>
+                &nbsp;&nbsp;&nbsp;"client_firstname" : "new_firstname",<br>
+                &nbsp;&nbsp;&nbsp;"client_surname" : "new_surname",<br>
+                }
+            </div>
+            <li><strong>NAME</strong> - новое название кошелька;</li>
+            <li><strong>CLIENT_FIRSTNAME</strong> - новое имя клиента;</li>
+            <li><strong>CLIENT_SURNAME</strong> - новая фамилия клиента.</li>
+        </div>
+      </div>
+        <hr>
+
+        <div class="row"><br>
+        <div class="col-8">
+          <strong style="font-size: 20px">5. Удаление кошелька.</strong><br>
+            Необходимо выполнить <strong>DELETE</strong> запрос следующего вида:<br>
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/<strong>{wallet_id}</strong>/
+            </li><br>
+            <li><strong>WALLET_ID</strong> - ID выбранного кошелька.</li>
+        </div>
+      </div>
+        <hr>
+
+        <div class="row">
+        <div class="col-8"><br>
+          <strong style="font-size: 20px">6. Пополнение баланса кошелька.</strong><br>
+            Необходимо выполнить <strong>POST</strong> запрос:
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/<strong>{wallet_id}</strong>/deposits/
+            </li><br>
+            Передав в <strong>body</strong> следущую структуру:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"amount" : "10000"<br>
+                }
+            </div>
+            <li><strong>AMOUNT</strong> - сумма пополнения.</li>
+        </div>
+      </div>
+        <hr>
+
+        <div class="row">
+        <div class="col-8"><br>
+          <strong style="font-size: 20px">7. Перевод денег с одного кошешлька на другой.</strong><br>
+            Необходимо выполнить <strong>POST</strong> запрос:
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/wallets/<strong>{wallet_sender}</strong>
+                /withdrawals/<strong>{wallet_receiver}</strong>/
+            </li><br>
+            Передав в <strong>body</strong> следущую структуру:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"amount" : "10000"<br>
+                }
+            </div>
+            <li><strong>WALLET_SENDER</strong> - номер кошелька отправителя;</li>
+            <li><strong>WALLET_RECEIVER</strong> - номер кошелька получателя;</li>
+            <li><strong>AMOUNT</strong> - сумма перевода.</li>
+        </div>
+      </div>
+        <hr>
+
+        <div class="row">
+        <div class="col-8"><br>
+          <strong style="font-size: 20px">8. Просмотр всех операций по кошельку.</strong><br>
+            Необходимо выполнить <strong>GET</strong> запрос:
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/operations/<strong>{wallet_id}</strong>/
+            </li><br>
+            В <strong>body</strong> можно передать параметр фильтрации:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"filter" : "date"<br>
+                }
+            </div>
+            <strong>"date"</strong> - фильтрация по возрастанию даты проведения операции;<br>
+            <strong>"-date"</strong> - фильтрация по убыванию даты проведения операции.
+        </div>
+      </div>
+        <hr>
+        <div class="row">
+        <div class="col-8"><br>
+          <strong style="font-size: 20px">9. Просмотр конкретных операций по кошельку (пополнение/вывод).</strong><br>
+            Необходимо выполнить <strong>GET</strong> запрос:
+            <li class="list-group-item list-group-item-dark">
+                https://nsokolova.samartsev.com/operations/<strong>{wallet_id}</strong>/
+                <strong>{operation_name}</strong>/
+            </li><br>
+            В <strong>body</strong> можно передать параметр фильтрации:
+            <div class="alert alert-secondary" role="alert">
+                {<br>
+                &nbsp;&nbsp;&nbsp;"filter" : "date"<br>
+                }
+            </div>
+            <li><strong>OPERATION_NAME:</strong>
+                <ul>
+                    <li>deposits - пополнение кошешька;</li>
+                    <li>withdrawal - вывод денег с кошелька;</li>
+                </ul>
+
+            </li>
+            <strong>"date"</strong> - фильтрация по возрастанию даты проведения операции;<br>
+            <strong>"-date"</strong> - фильтрация по убыванию даты проведения операции.
+        </div>
+      </div>
+        <hr>
+    </div>
+
 </body>
 </html>
