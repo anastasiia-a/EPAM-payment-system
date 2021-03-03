@@ -22,9 +22,11 @@ class WalletViewSet(ModelViewSet):
 
 @transaction.atomic
 def transfer_money(sender: str, receiver: str, amount: Decimal) -> None:
-    """Transfers money from the sender's wallet to the receiver's wallet
-    if the sender's wallet balance is greater than or equal to the amount of
-    money entered."""
+    """
+    Transfers money from the sender's wallet to the receiver's wallet
+    if the sender's wallet balance is greater than or equal
+    to the amount of money entered.
+    """
     wallet_receiver = Wallet.objects.filter(pk=receiver)
     wallet_sender = Wallet.objects.filter(pk=sender)
     if wallet_sender.annotate(money=F('balance')).filter(money__gte=amount):
@@ -41,10 +43,13 @@ def transfer_money(sender: str, receiver: str, amount: Decimal) -> None:
 @csrf_exempt
 @require_http_methods(["POST"])
 def deposits(request, wallet_receiver: str) -> HttpResponse:
-    """Called when requesting to transfer money to
+    """
+    Called when requesting to transfer money to
     the customer's wallet.
+
     Returns status 200-OK if it can be done
-    otherwise returns status 400-BAD REQUEST."""
+    otherwise returns status 400-BAD REQUEST.
+    """
     wallet_id = int(wallet_receiver)
     try:
         data = json.loads(request.body)
@@ -66,10 +71,13 @@ def deposits(request, wallet_receiver: str) -> HttpResponse:
 @require_http_methods(["POST"])
 def withdrawals(request, wallet_sender: str,
                 wallet_receiver: str) -> HttpResponse:
-    """Called when requesting to transfer money to
+    """
+    Called when requesting to transfer money to
     the customer's wallet from another wallet.
+
     Returns status 200-OK if it can be done
-    otherwise returns status 400-BAD REQUEST."""
+    otherwise returns status 400-BAD REQUEST.
+    """
     wallet_sender = int(wallet_sender)
     wallet_receiver = int(wallet_receiver)
     try:
@@ -87,8 +95,10 @@ def withdrawals(request, wallet_sender: str,
 @transaction.non_atomic_requests
 @require_http_methods(["GET"])
 def operations(request, wallet_id: str, operation: str):
-    """Returns operations (deposit/withdrawal/all operations)
-    on the desired wallet in JSON format."""
+    """
+    Returns operations (deposit/withdrawal/all operations)
+    on the desired wallet in JSON format.
+    """
     operation_cases = (
         '',
         'deposit',

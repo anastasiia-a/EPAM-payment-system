@@ -25,7 +25,11 @@ SECRET_KEY = 'nza=1gba!fl3s9-nmc+e_brdv#y0xn=do9op9blm#pe%*j^8dp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['54.234.232.48', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'nsokolova.samartsev.com',
+    '54.234.232.48',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -125,4 +129,4 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'home/nsokolova/EPAM-payment-system/payment_system/static/'
