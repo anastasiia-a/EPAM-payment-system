@@ -21,6 +21,19 @@ class WalletViewSet(ModelViewSet):
     serializer_class = WalletSerializer
 
 
+@transaction.non_atomic_requests
+@require_http_methods(["GET"])
+def see_the_wallet(request, wallet_id: str) -> JsonResponse:
+    """Returns all data about the selected wallet."""
+    wallet_id = int(wallet_id)
+    wallet = Wallet.objects.filter(pk=wallet_id)
+    if wallet:
+        return JsonResponse(list(wallet.values()), safe=False)
+
+    return JsonResponse(['Wallet with id='+f'{wallet_id}'+' does not exist'],
+                        safe=False)
+
+
 @transaction.atomic
 def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
     """
@@ -131,7 +144,8 @@ def documentation(request):
 @require_http_methods(["POST"])
 def get_token(request) -> JsonResponse:
     """
-
+    Returns the user's token
+    if the user was successfully authorized.
     """
     data = request.POST
     username = data.get('username', None)
