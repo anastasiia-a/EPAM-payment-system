@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal, ROUND_FLOOR
 
+from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse, JsonResponse
@@ -123,3 +124,21 @@ def operations(request, wallet_id: str, operation: str):
 
 def documentation(request):
     return render(request, "index.html")
+
+
+@transaction.non_atomic_requests
+@csrf_exempt
+@require_http_methods(["POST"])
+def get_token(request) -> JsonResponse:
+    """
+
+    """
+    data = request.POST
+    username = data.get('username', None)
+    password = data.get('password', None)
+
+    if not User.objects.filter(username=username, password=password):
+        return JsonResponse(['Invalid username or password'], safe=False)
+
+    user = User.objects.get(username=username, password=password)
+    return JsonResponse({'Token': f'{user.token}'}, safe=False)
