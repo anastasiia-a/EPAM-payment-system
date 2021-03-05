@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal, ROUND_FLOOR
 
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F
@@ -9,6 +10,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.viewsets import ModelViewSet
 
 from wallets.models import Wallet, Operation
@@ -146,13 +148,23 @@ def get_token(request) -> JsonResponse:
     """
     Returns the user's token
     if the user was successfully authorized.
+
+    If the user is authorized for the first time,
+    a new token is created for the user.
+    If the user has been authorized before,
+    the existing token is returned.
     """
-    data = request.POST
+    data = json.loads(request.body)
     username = data.get('username', None)
     password = data.get('password', None)
 
-    if not User.objects.filter(username=username, password=password):
-        return JsonResponse(['Invalid username or password'], safe=False)
+    user = User.objects.filter(username=username)
+    if user and check_password(password, user.first().password):
+        user = user.first()
+        token = Token.objects.filter(user=user).first()
+        token = Token.objects.create(user=user) if not token else token
 
-    user = User.objects.get(username=username, password=password)
-    return JsonResponse({'Token': f'{user.token}'}, safe=False)
+        return JsonResponse({'Token': f'{token}'}, safe=False)
+
+    return JsonResponse(['Invalid username or password'], safe=False)
+
