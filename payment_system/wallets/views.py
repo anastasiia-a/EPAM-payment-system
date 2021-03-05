@@ -21,22 +21,21 @@ class WalletViewSet(ModelViewSet):
 
 
 @transaction.atomic
-def transfer_money(sender: str, receiver: str, amount: Decimal) -> None:
+def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
     """
     Transfers money from the sender's wallet to the receiver's wallet
     if the sender's wallet balance is greater than or equal
     to the amount of money entered.
     """
-    wallet_receiver = Wallet.objects.filter(pk=receiver)
-    wallet_sender = Wallet.objects.filter(pk=sender)
-    if wallet_sender.annotate(money=F('balance')).filter(money__gte=amount):
-        wallet_sender.update(balance=F('balance') - amount)
-        wallet_receiver.update(balance=F('balance') + amount)
-    else:
+    Wallet.objects.filter(pk=sender).update(balance=F('balance') - amount)
+    if Wallet.objects.get(pk=sender).balance < Decimal("0.00"):
         raise ValueError
 
-    Operation.objects.create(name='deposit', wallet=wallet_receiver, amount=amount)
-    Operation.objects.create(name='withdrawal', wallet=wallet_sender, amount=amount)
+    Wallet.objects.filter(pk=receiver).update(balance=F('balance') + amount)
+    Operation.objects.create(name='deposit', wallet=Wallet.objects.get(pk=receiver),
+                             amount=amount)
+    Operation.objects.create(name='withdrawal', wallet=Wallet.objects.get(pk=sender),
+                             amount=amount)
 
 
 @transaction.non_atomic_requests
