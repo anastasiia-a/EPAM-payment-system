@@ -24,6 +24,7 @@ class AllExceptions(ValueError, KeyError,
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
+@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
     """
@@ -58,6 +59,7 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
+@csrf_exempt
 @require_http_methods(["GET", "POST", "DELETE"])
 def crud_for_the_wallet(request, wallet_id: str) -> \
         HttpResponse or JsonResponse:
@@ -119,6 +121,7 @@ def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
+@csrf_exempt
 @require_http_methods(["POST"])
 def deposits(request, wallet_receiver: str) -> HttpResponse:
     """
@@ -147,6 +150,7 @@ def deposits(request, wallet_receiver: str) -> HttpResponse:
 
 @transaction.non_atomic_requests
 @decorator_for_authorization
+@csrf_exempt
 @require_http_methods(["POST"])
 def withdrawals(request, wallet_sender: str,
                 wallet_receiver: str) -> HttpResponse:
