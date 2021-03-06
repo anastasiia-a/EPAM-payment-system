@@ -23,7 +23,6 @@ class WalletCRUDTestCase(TestCase):
 
     def test_create_without_token(self):
         data = {
-            "name": 'wallet_3',
             "client_firstname": 'firstname_3',
             "client_surname": 'surname_3',
         }
@@ -35,7 +34,18 @@ class WalletCRUDTestCase(TestCase):
         self.assertEqual(2, Wallet.objects.count())
 
     def test_update_without_token(self):
-        pass
+        old_surname = self.wallet_2.client_surname
+        new_data = {
+            "client_firstname": self.wallet_2.client_firstname,
+            "client_surname": 'new surname',
+        }
+        url = '/wallets/' + str(self.wallet_2.id) + '/'
+        response = self.client.post(url, data=json.dumps(new_data),
+                                    content_type='application/json')
+
+        self.wallet_2.refresh_from_db()
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+        self.assertEqual(old_surname, self.wallet_2.client_surname)
 
     def test_delete_without_token(self):
         url = '/wallets/' + str(self.wallet_1.id) + '/'
@@ -53,7 +63,6 @@ class WalletCRUDTestCase(TestCase):
     def test_create(self):
         self.assertEqual(2, Wallet.objects.count())
         data = {
-            "name": 'wallet_3',
             "client_firstname": 'firstname_3',
             "client_surname": 'surname_3',
         }
@@ -62,21 +71,20 @@ class WalletCRUDTestCase(TestCase):
                                     HTTP_AUTHORIZATION='Token ' + str(self.token),
                                     content_type='application/json')
 
-        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(3, Wallet.objects.count())
 
     def test_update(self):
         self.assertEqual('surname_1', self.wallet_1.client_surname)
         data = {
-            "name": self.wallet_1.name,
             "client_firstname": self.wallet_1.client_firstname,
             "client_surname": 'new_surname',
         }
         json_data = json.dumps(data)
         url = '/wallets/' + str(self.wallet_1.id) + '/'
-        response = self.client.put(url, data=json_data,
-                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
-                                   content_type='application/json')
+        response = self.client.post(url, data=json_data,
+                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    content_type='application/json')
 
         self.wallet_1.refresh_from_db()
         self.assertEqual(status.HTTP_200_OK, response.status_code)

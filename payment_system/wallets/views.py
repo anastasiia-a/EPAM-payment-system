@@ -24,12 +24,36 @@ class AllExceptions(ValueError, KeyError,
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
-@require_http_methods(["GET"])
-def see_wallets(request) -> HttpResponse or JsonResponse:
-    """Returns information about all wallets."""
-    wallets = Wallet.objects.all().values('id', 'name', 'client_firstname',
-                                          'client_surname')
-    return JsonResponse(list(wallets), safe=False)
+@require_http_methods(["GET", "POST"])
+def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
+    """
+    If HTTP method - GET:
+    returns information about all wallets.
+
+    If HTTP method - POST:
+    creates the new wallet.
+    """
+    if request.method == "GET":
+        wallets = Wallet.objects.all().values('id', 'name', 'client_firstname',
+                                              'client_surname')
+        return JsonResponse(list(wallets), safe=False)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+        wallet_pk = Wallet.objects.all().last().pk
+        if not (data.get('client_firstname') and data.get('client_surname')):
+            return JsonResponse(['Enter the correct data'], safe=False)
+
+        fields = {
+            'name': f'wallet {wallet_pk + 1}',
+            'client_firstname': data.get('client_firstname'),
+            'client_surname': data.get('client_surname'),
+        }
+        try:
+            Wallet.objects.create(**fields)
+            return JsonResponse(['The wallet created'], safe=False)
+        except IntegrityError:
+            return JsonResponse(['The wallet can not be created'], safe=False)
 
 
 @decorator_for_authorization
@@ -62,15 +86,13 @@ def crud_for_the_wallet(request, wallet_id: str) -> \
         w = Wallet.objects.get(pk=wallet_id)
         data = json.loads(request.body)
         fields = {
-            'name': data.get('name', w.name),
             'client_firstname': data.get('client_firstname', w.client_firstname),
             'client_surname': data.get('client_surname', w.client_surname),
         }
         try:
             wallet.update(**fields)
         except IntegrityError:
-            return JsonResponse([f"Wallet with name '{fields.get('name')}'"
-                                 f" already exists."], safe=False)
+            return JsonResponse(['The wallet can not be updated.'], safe=False)
 
         return JsonResponse([f'Wallet with id={wallet_id} updated'], safe=False)
 
