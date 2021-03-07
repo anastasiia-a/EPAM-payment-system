@@ -47,7 +47,9 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
         data = json.loads(request.body)
         wallet_pk = Wallet.objects.all().last().pk
         if not (data.get('client_firstname') and data.get('client_surname')):
-            return JsonResponse(['Enter the correct data'], safe=False)
+            return JsonResponse(['Enter the correct data'],
+                                status=status.HTTP_400_BAD_REQUEST,
+                                safe=False)
 
         fields = {
             'name': f'wallet {wallet_pk + 1}',
@@ -56,9 +58,13 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
         }
         try:
             Wallet.objects.create(**fields)
-            return JsonResponse(['The wallet created'], safe=False)
+            return JsonResponse(['The wallet created'],
+                                status=status.HTTP_201_CREATED,
+                                safe=False)
         except exceptions:
-            return JsonResponse(['The wallet can not be created'], safe=False)
+            return JsonResponse(['The wallet can not be created'],
+                                status=status.HTTP_400_BAD_REQUEST,
+                                safe=False)
 
 
 @decorator_for_authorization
@@ -85,14 +91,14 @@ def crud_for_the_wallet(request, wallet_id: str) -> \
 
     if wallet and request.method == 'DELETE':
         Wallet.objects.get(pk=wallet_id).delete()
-        return JsonResponse([f'Wallet with id={wallet_id} deleted'],
-                            safe=False)
+        return JsonResponse([f'Wallet with id={wallet_id} deleted'], safe=False)
 
     if wallet and request.method == 'POST':
         w = Wallet.objects.get(pk=wallet_id)
         data = json.loads(request.body)
         if not (data.get('client_firstname') and data.get('client_surname')):
-            return JsonResponse(['Enter the correct data'], safe=False)
+            return JsonResponse(['Enter the correct data'], safe=False,
+                                status=status.HTTP_400_BAD_REQUEST)
 
         fields = {
             'client_firstname': data.get('client_firstname', w.client_firstname),
@@ -101,11 +107,13 @@ def crud_for_the_wallet(request, wallet_id: str) -> \
         try:
             wallet.update(**fields)
         except exceptions:
-            return JsonResponse(['The wallet can not be updated.'], safe=False)
+            return JsonResponse(['The wallet can not be updated.'], safe=False,
+                                status=status.HTTP_400_BAD_REQUEST)
 
         return JsonResponse([f'Wallet with id={wallet_id} updated'], safe=False)
 
-    return JsonResponse([f'Wallet with id={wallet_id} does not exist'], safe=False)
+    return JsonResponse([f'Wallet with id={wallet_id} does not exist'],
+                        safe=False, status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.atomic
@@ -215,6 +223,7 @@ def operations(request, wallet_id: str, operation: str):
 
 
 def documentation(request):
+    """Returns documentation html page"""
     return render(request, "index.html")
 
 
@@ -243,5 +252,7 @@ def get_token(request) -> JsonResponse:
 
         return JsonResponse({'Token': f'{token}'}, safe=False)
 
-    return JsonResponse(['Invalid username or password'], safe=False)
+    return JsonResponse(['Invalid username or password'],
+                        status=status.HTTP_401_UNAUTHORIZED,
+                        safe=False)
 

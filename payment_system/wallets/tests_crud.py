@@ -71,7 +71,7 @@ class WalletCRUDTestCase(TestCase):
                                     HTTP_AUTHORIZATION='Token ' + str(self.token),
                                     content_type='application/json')
 
-        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
         self.assertEqual(3, Wallet.objects.count())
 
     def test_update(self):
