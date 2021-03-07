@@ -1,5 +1,5 @@
 import json
-from decimal import Decimal, ROUND_FLOOR
+from decimal import Decimal, ROUND_FLOOR, InvalidOperation
 
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
@@ -16,10 +16,14 @@ from wallets.decorators import decorator_for_authorization
 from wallets.models import Wallet, Operation
 
 
-class AllExceptions(ValueError, KeyError,
-                    Wallet.DoesNotExist,
-                    AttributeError, IntegrityError):
-    pass
+exceptions = (
+    ValueError,
+    KeyError,
+    AttributeError,
+    IntegrityError,
+    InvalidOperation,
+    Wallet.DoesNotExist,
+)
 
 
 @decorator_for_authorization
@@ -53,7 +57,7 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
         try:
             Wallet.objects.create(**fields)
             return JsonResponse(['The wallet created'], safe=False)
-        except IntegrityError:
+        except exceptions:
             return JsonResponse(['The wallet can not be created'], safe=False)
 
 
@@ -74,7 +78,7 @@ def crud_for_the_wallet(request, wallet_id: str) -> \
     Updates the selected wallet.
     """
     wallet_id = int(wallet_id)
-    wallet = Wallet.objects.filter(pk=wallet_id)
+    wallet = Wallet.objects.filter(id=wallet_id)
 
     if wallet and request.method == 'GET':
         return JsonResponse(list(wallet.values()), safe=False)
@@ -87,13 +91,16 @@ def crud_for_the_wallet(request, wallet_id: str) -> \
     if wallet and request.method == 'POST':
         w = Wallet.objects.get(pk=wallet_id)
         data = json.loads(request.body)
+        if not (data.get('client_firstname') and data.get('client_surname')):
+            return JsonResponse(['Enter the correct data'], safe=False)
+
         fields = {
             'client_firstname': data.get('client_firstname', w.client_firstname),
             'client_surname': data.get('client_surname', w.client_surname),
         }
         try:
             wallet.update(**fields)
-        except IntegrityError:
+        except exceptions:
             return JsonResponse(['The wallet can not be updated.'], safe=False)
 
         return JsonResponse([f'Wallet with id={wallet_id} updated'], safe=False)
@@ -137,12 +144,13 @@ def deposits(request, wallet_receiver: str) -> HttpResponse:
         amount = Decimal(data['amount'])
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
         if amount > Decimal("0.00"):
-            Wallet.objects.filter(pk=wallet_id).update(balance=F('balance') + amount)
-            Operation.objects.create(name='deposit',
-                                     wallet=Wallet.objects.get(pk=wallet_id),
-                                     amount=amount)
+            with transaction.atomic():
+                Wallet.objects.filter(id=wallet_id).update(balance=F('balance') + amount)
+                Operation.objects.create(name='deposit',
+                                         wallet=Wallet.objects.get(id=wallet_id),
+                                         amount=amount)
 
-    except AllExceptions:
+    except exceptions:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)
@@ -169,7 +177,7 @@ def withdrawals(request, wallet_sender: str,
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
         if amount > Decimal("0.00"):
             transfer_money(wallet_sender, wallet_receiver, amount)
-    except AllExceptions:
+    except exceptions:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(status=status.HTTP_200_OK)

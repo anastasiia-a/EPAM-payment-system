@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.core.validators import MaxValueValidator
 from django.db import models
 
 
@@ -8,7 +9,8 @@ class Wallet(models.Model):
     name = models.CharField(max_length=255, unique=True)
     client_firstname = models.CharField(max_length=30)
     client_surname = models.CharField(max_length=30)
-    balance = models.DecimalField(max_digits=9, decimal_places=2, default=Decimal("0.00"))
+    balance = models.DecimalField(max_digits=9, decimal_places=2,
+                                  default=Decimal("0.00"))
 
     def __str__(self):
         return self.name
