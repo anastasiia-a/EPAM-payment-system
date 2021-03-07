@@ -157,11 +157,12 @@ def deposits(request, wallet_receiver: str) -> HttpResponse:
                 Operation.objects.create(name='deposit',
                                          wallet=Wallet.objects.get(id=wallet_id),
                                          amount=amount)
+                return HttpResponse(status=status.HTTP_200_OK)
 
     except exceptions:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
-    return HttpResponse(status=status.HTTP_200_OK)
+    return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.non_atomic_requests
@@ -185,10 +186,12 @@ def withdrawals(request, wallet_sender: str,
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
         if amount > Decimal("0.00"):
             transfer_money(wallet_sender, wallet_receiver, amount)
+            return HttpResponse(status=status.HTTP_200_OK)
+
     except exceptions:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
-    return HttpResponse(status=status.HTTP_200_OK)
+    return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.non_atomic_requests
@@ -199,6 +202,9 @@ def operations(request, wallet_id: str, operation: str):
     Returns operations (deposit/withdrawal/all operations)
     on the desired wallet in JSON format.
     """
+    if not Wallet.objects.filter(id=wallet_id):
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+
     operation_cases = (
         '',
         'deposit',

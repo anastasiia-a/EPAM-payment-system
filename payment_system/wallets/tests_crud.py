@@ -16,6 +16,7 @@ class WalletCRUDTestCase(TestCase):
                                               client_surname='surname_1')
         self.wallet_2 = Wallet.objects.create(name='wallet_2', client_firstname='firstname_2',
                                               client_surname='surname_2')
+        self.invalid_id = 300
 
     def test_read_without_token(self):
         response = self.client.get('/wallets/')
@@ -39,7 +40,7 @@ class WalletCRUDTestCase(TestCase):
             "client_firstname": self.wallet_2.client_firstname,
             "client_surname": 'new surname',
         }
-        url = '/wallets/' + str(self.wallet_2.id) + '/'
+        url = f"/wallets/{self.wallet_2.id}/"
         response = self.client.post(url, data=json.dumps(new_data),
                                     content_type='application/json')
 
@@ -48,17 +49,31 @@ class WalletCRUDTestCase(TestCase):
         self.assertEqual(old_surname, self.wallet_2.client_surname)
 
     def test_delete_without_token(self):
-        url = '/wallets/' + str(self.wallet_1.id) + '/'
+        url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.delete(url, content_type='application/json')
 
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
         self.assertEqual(2, Wallet.objects.count())
 
-    def test_read(self):
+    def test_read_wallets(self):
         response = self.client.get('/wallets/',
                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
                                    content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
+
+    def test_read_the_wallet(self):
+        url = f"/wallets/{self.wallet_1.id}/"
+        response = self.client.get(url,
+                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                   content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+
+    def test_read_the_invalid_wallet(self):
+        url = f"/wallets/{self.invalid_id}/"
+        response = self.client.get(url,
+                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                   content_type='application/json')
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_create(self):
         self.assertEqual(2, Wallet.objects.count())
@@ -81,7 +96,7 @@ class WalletCRUDTestCase(TestCase):
             "client_surname": 'new_surname',
         }
         json_data = json.dumps(data)
-        url = '/wallets/' + str(self.wallet_1.id) + '/'
+        url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.post(url, data=json_data,
                                     HTTP_AUTHORIZATION='Token ' + str(self.token),
                                     content_type='application/json')
@@ -90,12 +105,35 @@ class WalletCRUDTestCase(TestCase):
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual('new_surname', self.wallet_1.client_surname)
 
+    def test_invalid_update(self):
+        data = {
+            "client_firstname": 'new_firstname',
+            "client_surname": 'new_surname',
+        }
+        json_data = json.dumps(data)
+        url = f"/wallets/{self.invalid_id}/"
+        response = self.client.post(url, data=json_data,
+                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    content_type='application/json')
+
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
     def test_delete(self):
         self.assertEqual(2, Wallet.objects.count())
-        url = '/wallets/' + str(self.wallet_1.id) + '/'
+        url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.delete(url,
                                       HTTP_AUTHORIZATION='Token ' + str(self.token),
                                       content_type='application/json')
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(1, Wallet.objects.count())
+
+    def test_invalid_delete(self):
+        self.assertEqual(2, Wallet.objects.count())
+        url = f"/wallets/{self.invalid_id}/"
+        response = self.client.delete(url,
+                                      HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                      content_type='application/json')
+
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual(2, Wallet.objects.count())
