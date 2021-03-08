@@ -3,6 +3,7 @@ from decimal import Decimal, ROUND_FLOOR, InvalidOperation
 
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import transaction, IntegrityError
 from django.db.models import F
 from django.http import HttpResponse, JsonResponse
@@ -39,9 +40,14 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
     creates the new wallet.
     """
     if request.method == "GET":
-        wallets = Wallet.objects.all().values('id', 'name', 'client_firstname',
-                                              'client_surname')
-        return JsonResponse(list(wallets), safe=False)
+        wallet_list = Wallet.objects.all()
+        paginator = Paginator(wallet_list, 25)
+
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        result = page_obj.object_list.values('id', 'name', 'client_firstname',
+                                             'client_surname')
+        return JsonResponse(list(result), safe=False)
 
     if request.method == "POST":
         data = json.loads(request.body)
@@ -224,8 +230,11 @@ def operations(request, wallet_id: str, operation: str):
     elif filter_:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
-    operations_list = list(operations_qs.values())
-    return JsonResponse(operations_list, safe=False)
+    paginator = Paginator(operations_qs, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    result = page_obj.object_list.values()
+    return JsonResponse(list(result), safe=False)
 
 
 def documentation(request):

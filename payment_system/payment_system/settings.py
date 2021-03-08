@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     'nsokolova.samartsev.com',
     '54.234.232.48',
     '127.0.0.1',
+    '0.0.0.0',
 ]
 
 

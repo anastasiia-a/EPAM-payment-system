@@ -63,9 +63,9 @@ class OperationsTestCase(TestCase):
 
     def test_invalid_deposit(self):
         test_cases = (
-            2000000000,
             0,
             -200,
+            2000000000,
         )
         url = f"/wallets/{self.wallet1.id}/deposits/"
         for amount in test_cases:
@@ -99,9 +99,9 @@ class OperationsTestCase(TestCase):
 
     def test_invalid_withdrawal(self):
         test_cases = (
-            1000000000,
             0,
             -100,
+            1000000000,
         )
         url = f"/wallets/{self.wallet1.id}/withdrawals/{self.wallet2.id}/"
         for amount in test_cases:
