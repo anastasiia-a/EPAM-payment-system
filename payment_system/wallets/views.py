@@ -123,8 +123,7 @@ def see_wallets_or_create(request: WSGIRequest) -> JsonResponse:
 @decorator_for_authorization
 @transaction.non_atomic_requests
 @require_http_methods(["GET", "POST", "DELETE"])
-def crud_for_the_wallet(request: WSGIRequest, wallet_id: str)\
-        -> JsonResponse:
+def crud_for_the_wallet(request: WSGIRequest, wallet_id: str) -> JsonResponse:
     """
     If HTTP method - GET:
     Returns all data about the selected wallet.

@@ -57,21 +57,21 @@ class WalletCRUDTestCase(TestCase):
 
     def test_read_wallets(self):
         response = self.client.get('/wallets/',
-                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                   HTTP_AUTHORIZATION=f'Token {self.token}',
                                    content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_read_the_wallet(self):
         url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.get(url,
-                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                   HTTP_AUTHORIZATION=f'Token {self.token}',
                                    content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_read_the_invalid_wallet(self):
         url = f"/wallets/{self.invalid_id}/"
         response = self.client.get(url,
-                                   HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                   HTTP_AUTHORIZATION=f'Token {self.token}',
                                    content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -83,7 +83,7 @@ class WalletCRUDTestCase(TestCase):
         }
         json_data = json.dumps(data)
         response = self.client.post('/wallets/', data=json_data,
-                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    HTTP_AUTHORIZATION=f'Token {self.token}',
                                     content_type='application/json')
 
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
@@ -98,7 +98,7 @@ class WalletCRUDTestCase(TestCase):
         json_data = json.dumps(data)
         url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.post(url, data=json_data,
-                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    HTTP_AUTHORIZATION=f'Token {self.token}',
                                     content_type='application/json')
 
         self.wallet_1.refresh_from_db()
@@ -113,7 +113,7 @@ class WalletCRUDTestCase(TestCase):
         json_data = json.dumps(data)
         url = f"/wallets/{self.invalid_id}/"
         response = self.client.post(url, data=json_data,
-                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    HTTP_AUTHORIZATION=f'Token {self.token}',
                                     content_type='application/json')
 
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
@@ -122,7 +122,7 @@ class WalletCRUDTestCase(TestCase):
         self.assertEqual(2, Wallet.objects.count())
         url = f"/wallets/{self.wallet_1.id}/"
         response = self.client.delete(url,
-                                      HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                      HTTP_AUTHORIZATION=f'Token {self.token}',
                                       content_type='application/json')
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -132,7 +132,7 @@ class WalletCRUDTestCase(TestCase):
         self.assertEqual(2, Wallet.objects.count())
         url = f"/wallets/{self.invalid_id}/"
         response = self.client.delete(url,
-                                      HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                      HTTP_AUTHORIZATION=f'Token {self.token}',
                                       content_type='application/json')
 
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)

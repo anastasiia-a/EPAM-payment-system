@@ -55,7 +55,7 @@ class OperationsTestCase(TestCase):
             "amount": 200
         }
         response = self.client.post(url, data=data,
-                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    HTTP_AUTHORIZATION=f'Token {self.token}',
                                     content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.wallet1.refresh_from_db()
@@ -75,7 +75,7 @@ class OperationsTestCase(TestCase):
                     "amount": amount
                 }
                 response = self.client.post(url, data=data,
-                                            HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                            HTTP_AUTHORIZATION=f'Token {self.token}',
                                             content_type='application/json')
                 self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
                 self.wallet1.refresh_from_db()
@@ -89,7 +89,7 @@ class OperationsTestCase(TestCase):
             "amount": 100
         }
         response = self.client.post(url, data=data,
-                                    HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                    HTTP_AUTHORIZATION=f'Token {self.token}',
                                     content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.wallet1.refresh_from_db()
@@ -112,7 +112,7 @@ class OperationsTestCase(TestCase):
                     "amount": amount
                 }
                 response = self.client.post(url, data=data,
-                                            HTTP_AUTHORIZATION='Token ' + str(self.token),
+                                            HTTP_AUTHORIZATION=f'Token {self.token}',
                                             content_type='application/json')
                 self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
                 self.wallet1.refresh_from_db()
@@ -127,13 +127,13 @@ class OperationsTestCase(TestCase):
 
     def test_get_transactions_the_wallet(self):
         url = f"/operations/{self.wallet1.id}/"
-        response = self.client.get(url, HTTP_AUTHORIZATION='Token ' + str(self.token),
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Token {self.token}',
                                    content_type='application/json')
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_get_transactions_the_invalid_wallet(self):
         url = f"/operations/{self.invalid_id}/"
-        response = self.client.get(url, HTTP_AUTHORIZATION='Token ' + str(self.token),
+        response = self.client.get(url, HTTP_AUTHORIZATION=f'Token {self.token}',
                                    content_type='application/json')
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 

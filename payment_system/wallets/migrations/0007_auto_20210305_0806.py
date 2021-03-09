@@ -21,6 +21,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='wallet',
             name='balance',
-            field=models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=9, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))]),
+            field=models.DecimalField(decimal_places=2,
+                                      default=Decimal('0.00'),
+                                      max_digits=9,
+                                      validators=[django.core.validators.MinValueValidator
+                                                  (Decimal('0.00'))]),
         ),
     ]
