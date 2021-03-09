@@ -208,6 +208,7 @@ def operations(request, wallet_id: str, operation: str):
     Returns operations (deposit/withdrawal/all operations)
     on the desired wallet in JSON format.
     """
+    wallet_id = int(wallet_id)
     if not Wallet.objects.filter(id=wallet_id):
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
@@ -219,7 +220,6 @@ def operations(request, wallet_id: str, operation: str):
     if operation not in operation_cases:
         return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
 
-    wallet_id = int(wallet_id)
     operations_qs = Operation.objects.filter(wallet=wallet_id)
     if operation:
         operations_qs = operations_qs.filter(name=operation)

@@ -19,7 +19,7 @@ class Operation(models.Model):
     name = models.CharField(max_length=10)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
     date = models.DateField(default=datetime.date.today())
-    amount = models.DecimalField(max_digits=7, decimal_places=2)
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __str__(self):
         return f'{self.date}: {self.name} - amount={self.amount}'

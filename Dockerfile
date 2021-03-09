@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /payment_system
 WORKDIR /payment_system
 
-COPY ./requirements.txt /payment_system/
+COPY ./requirements.txt /payment_system/requirements.txt
 RUN pip install -r /payment_system/requirements.txt
 
 COPY ./payment_system /payment_system

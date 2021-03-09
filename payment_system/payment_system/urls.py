@@ -21,8 +21,8 @@ from wallets.views import operations, documentation, get_token
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('wallets/', include('wallets.urls')),
+    path('generate_token/', get_token),
     re_path('operations/(?P<wallet_id>[0-9]+)/'
             '(?P<operation>[a-z]*)/?$', operations),
-    path('generate_token/', get_token),
-    path('', documentation),
+    re_path('$', documentation),
 ]
