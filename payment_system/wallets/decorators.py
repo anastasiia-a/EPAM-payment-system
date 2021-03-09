@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 
@@ -14,7 +14,7 @@ def decorator_for_authorization(func):
         meta = request.META.get('HTTP_AUTHORIZATION', '').split()
         token = meta[-1] if meta else None
         if not (token and Token.objects.filter(key=token)):
-            return HttpResponse(status=status.HTTP_401_UNAUTHORIZED)
+            return JsonResponse({}, status=status.HTTP_401_UNAUTHORIZED)
 
         return func(*args, **kwargs)
 

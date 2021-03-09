@@ -165,6 +165,8 @@ def deposits(request: WSGIRequest, wallet_receiver: str) -> JsonResponse:
     except exceptions:
         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
+    return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @transaction.non_atomic_requests
 @decorator_for_authorization
@@ -191,6 +193,8 @@ def withdrawals(request: WSGIRequest, wallet_sender: str,
 
     except exceptions:
         return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
+
+    return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.non_atomic_requests
