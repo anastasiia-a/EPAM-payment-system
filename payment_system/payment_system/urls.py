@@ -22,7 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('wallets/', include('wallets.urls')),
     path('generate_token/', get_token),
-    re_path('operations/^(?P<wallet_id>[0-9]+)/'
-            '^(?P<operation>[a-z]*)/?$', operations),
+    re_path('operations/(?P<wallet_id>[0-9]+)/'
+            '(?P<operation>[a-z]*)/?$', operations),
     re_path('^$', documentation),
 ]
