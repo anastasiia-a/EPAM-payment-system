@@ -3,10 +3,11 @@ from decimal import Decimal, ROUND_FLOOR, InvalidOperation
 
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
+from django.core.handlers.wsgi import WSGIRequest
 from django.core.paginator import Paginator
 from django.db import transaction, IntegrityError
 from django.db.models import F
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -31,7 +32,7 @@ exceptions = (
 @transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
-def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
+def see_wallets_or_create(request: WSGIRequest) -> JsonResponse:
     """
     If HTTP method - GET:
     returns information about all wallets.
@@ -53,9 +54,8 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
         data = json.loads(request.body)
         wallet_pk = Wallet.objects.all().last().pk
         if not (data.get('client_firstname') and data.get('client_surname')):
-            return JsonResponse(['Enter the correct data'],
-                                status=status.HTTP_400_BAD_REQUEST,
-                                safe=False)
+            return JsonResponse(['Enter the correct data'], safe=False,
+                                status=status.HTTP_400_BAD_REQUEST)
 
         fields = {
             'name': f'wallet {wallet_pk + 1}',
@@ -64,21 +64,19 @@ def see_wallets_or_create(request) -> HttpResponse or JsonResponse:
         }
         try:
             Wallet.objects.create(**fields)
-            return JsonResponse(['The wallet created'],
-                                status=status.HTTP_201_CREATED,
-                                safe=False)
+            return JsonResponse(['The wallet created'], safe=False,
+                                status=status.HTTP_201_CREATED)
         except exceptions:
-            return JsonResponse(['The wallet can not be created'],
-                                status=status.HTTP_400_BAD_REQUEST,
-                                safe=False)
+            return JsonResponse(['The wallet can not be created'], safe=False,
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["GET", "POST", "DELETE"])
-def crud_for_the_wallet(request, wallet_id: str) -> \
-        HttpResponse or JsonResponse:
+def crud_for_the_wallet(request: WSGIRequest, wallet_id: str)\
+        -> JsonResponse:
     """
     If HTTP method - GET:
     Returns all data about the selected wallet.
@@ -144,7 +142,7 @@ def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
 @transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["POST"])
-def deposits(request, wallet_receiver: str) -> HttpResponse:
+def deposits(request: WSGIRequest, wallet_receiver: str) -> JsonResponse:
     """
     Called when requesting to transfer money to
     the customer's wallet.
@@ -160,23 +158,20 @@ def deposits(request, wallet_receiver: str) -> HttpResponse:
         if amount > Decimal("0.00"):
             with transaction.atomic():
                 Wallet.objects.filter(id=wallet_id).update(balance=F('balance') + amount)
-                Operation.objects.create(name='deposit',
-                                         wallet=Wallet.objects.get(id=wallet_id),
-                                         amount=amount)
-                return HttpResponse(status=status.HTTP_200_OK)
+                Operation.objects.create(name='deposit', amount=amount,
+                                         wallet=Wallet.objects.get(id=wallet_id))
+                return JsonResponse({}, status=status.HTTP_200_OK)
 
     except exceptions:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-
-    return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.non_atomic_requests
 @decorator_for_authorization
 @csrf_exempt
 @require_http_methods(["POST"])
-def withdrawals(request, wallet_sender: str,
-                wallet_receiver: str) -> HttpResponse:
+def withdrawals(request: WSGIRequest, wallet_sender: str,
+                wallet_receiver: str) -> JsonResponse:
     """
     Called when requesting to transfer money to
     the customer's wallet from another wallet.
@@ -192,25 +187,24 @@ def withdrawals(request, wallet_sender: str,
         amount = amount.quantize(Decimal("1.00"), ROUND_FLOOR)
         if amount > Decimal("0.00"):
             transfer_money(wallet_sender, wallet_receiver, amount)
-            return HttpResponse(status=status.HTTP_200_OK)
+            return JsonResponse({}, status=status.HTTP_200_OK)
 
     except exceptions:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-
-    return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.non_atomic_requests
 @decorator_for_authorization
 @require_http_methods(["GET"])
-def operations(request, wallet_id: str, operation: str):
+def operations(request: WSGIRequest, wallet_id: str,
+               operation: str) -> JsonResponse:
     """
     Returns operations (deposit/withdrawal/all operations)
     on the desired wallet in JSON format.
     """
     wallet_id = int(wallet_id)
     if not Wallet.objects.filter(id=wallet_id):
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
     operation_cases = (
         '',
@@ -218,17 +212,17 @@ def operations(request, wallet_id: str, operation: str):
         'withdrawal',
     )
     if operation not in operation_cases:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
     operations_qs = Operation.objects.filter(wallet=wallet_id)
     if operation:
         operations_qs = operations_qs.filter(name=operation)
 
-    filter_ = request.GET.get('filter', None)
+    filter_ = request.GET.get('filter')
     if filter_ in ('date', '-date'):
         operations_qs = operations_qs.order_by(filter_)
     elif filter_:
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({}, status=status.HTTP_400_BAD_REQUEST)
 
     paginator = Paginator(operations_qs, 25)
     page_number = request.GET.get('page')
@@ -237,7 +231,7 @@ def operations(request, wallet_id: str, operation: str):
     return JsonResponse(list(result), safe=False)
 
 
-def documentation(request):
+def documentation(request: WSGIRequest) -> HttpResponse:
     """Returns documentation html page"""
     return render(request, "index.html")
 
@@ -245,7 +239,7 @@ def documentation(request):
 @transaction.non_atomic_requests
 @csrf_exempt
 @require_http_methods(["POST"])
-def get_token(request) -> JsonResponse:
+def get_token(request: WSGIRequest) -> JsonResponse:
     """
     Returns the user's token
     if the user was successfully authorized.
@@ -256,8 +250,8 @@ def get_token(request) -> JsonResponse:
     the existing token is returned.
     """
     data = json.loads(request.body)
-    username = data.get('username', None)
-    password = data.get('password', None)
+    username = data.get('username')
+    password = data.get('password')
 
     user = User.objects.filter(username=username)
     if user and check_password(password, user.first().password):
@@ -265,9 +259,7 @@ def get_token(request) -> JsonResponse:
         token = Token.objects.filter(user=user).first()
         token = Token.objects.create(user=user) if not token else token
 
-        return JsonResponse({'Token': f'{token}'}, safe=False)
+        return JsonResponse({'Token': f'{token}'})
 
-    return JsonResponse(['Invalid username or password'],
-                        status=status.HTTP_401_UNAUTHORIZED,
-                        safe=False)
-
+    return JsonResponse(['Invalid username or password'], safe=False,
+                        status=status.HTTP_401_UNAUTHORIZED)
