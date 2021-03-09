@@ -28,9 +28,59 @@ exceptions = (
 )
 
 
+def documentation(request: WSGIRequest) -> HttpResponse:
+    """Returns documentation html page"""
+    return render(request, "index.html")
+
+
+@transaction.atomic
+def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
+    """
+    Transfers money from the sender's wallet to the receiver's wallet
+    if the sender's wallet balance is greater than or equal
+    to the amount of money entered.
+    """
+    Wallet.objects.filter(pk=sender).update(balance=F('balance') - amount)
+    if Wallet.objects.get(pk=sender).balance < Decimal("0.00"):
+        raise ValueError
+
+    Wallet.objects.filter(pk=receiver).update(balance=F('balance') + amount)
+    Operation.objects.create(name='deposit', wallet=Wallet.objects.get(pk=receiver),
+                             amount=amount)
+    Operation.objects.create(name='withdrawal', wallet=Wallet.objects.get(pk=sender),
+                             amount=amount)
+
+
+@transaction.non_atomic_requests
+@require_http_methods(["POST"])
+def get_token(request: WSGIRequest) -> JsonResponse:
+    """
+    Returns the user's token
+    if the user was successfully authorized.
+
+    If the user is authorized for the first time,
+    a new token is created for the user.
+    If the user has been authorized before,
+    the existing token is returned.
+    """
+    data = json.loads(request.body)
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.objects.filter(username=username)
+    if user and check_password(password, user.first().password):
+        user = user.first()
+        token = Token.objects.filter(user=user).first()
+        token = Token.objects.create(user=user) if not token else token
+
+        return JsonResponse({'Token': f'{token}'})
+
+    return JsonResponse(['Invalid username or password'], safe=False,
+                        status=status.HTTP_401_UNAUTHORIZED)
+
+
 @decorator_for_authorization
 @transaction.non_atomic_requests
-@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def see_wallets_or_create(request: WSGIRequest) -> JsonResponse:
     """
@@ -73,7 +123,6 @@ def see_wallets_or_create(request: WSGIRequest) -> JsonResponse:
 
 @decorator_for_authorization
 @transaction.non_atomic_requests
-@csrf_exempt
 @require_http_methods(["GET", "POST", "DELETE"])
 def crud_for_the_wallet(request: WSGIRequest, wallet_id: str)\
         -> JsonResponse:
@@ -120,27 +169,8 @@ def crud_for_the_wallet(request: WSGIRequest, wallet_id: str)\
                         safe=False, status=status.HTTP_400_BAD_REQUEST)
 
 
-@transaction.atomic
-def transfer_money(sender: int, receiver: int, amount: Decimal) -> None:
-    """
-    Transfers money from the sender's wallet to the receiver's wallet
-    if the sender's wallet balance is greater than or equal
-    to the amount of money entered.
-    """
-    Wallet.objects.filter(pk=sender).update(balance=F('balance') - amount)
-    if Wallet.objects.get(pk=sender).balance < Decimal("0.00"):
-        raise ValueError
-
-    Wallet.objects.filter(pk=receiver).update(balance=F('balance') + amount)
-    Operation.objects.create(name='deposit', wallet=Wallet.objects.get(pk=receiver),
-                             amount=amount)
-    Operation.objects.create(name='withdrawal', wallet=Wallet.objects.get(pk=sender),
-                             amount=amount)
-
-
 @decorator_for_authorization
 @transaction.non_atomic_requests
-@csrf_exempt
 @require_http_methods(["POST"])
 def deposits(request: WSGIRequest, wallet_receiver: str) -> JsonResponse:
     """
@@ -170,7 +200,6 @@ def deposits(request: WSGIRequest, wallet_receiver: str) -> JsonResponse:
 
 @transaction.non_atomic_requests
 @decorator_for_authorization
-@csrf_exempt
 @require_http_methods(["POST"])
 def withdrawals(request: WSGIRequest, wallet_sender: str,
                 wallet_receiver: str) -> JsonResponse:
@@ -233,37 +262,3 @@ def operations(request: WSGIRequest, wallet_id: str,
     page_obj = paginator.get_page(page_number)
     result = page_obj.object_list.values()
     return JsonResponse(list(result), safe=False)
-
-
-def documentation(request: WSGIRequest) -> HttpResponse:
-    """Returns documentation html page"""
-    return render(request, "index.html")
-
-
-@transaction.non_atomic_requests
-@csrf_exempt
-@require_http_methods(["POST"])
-def get_token(request: WSGIRequest) -> JsonResponse:
-    """
-    Returns the user's token
-    if the user was successfully authorized.
-
-    If the user is authorized for the first time,
-    a new token is created for the user.
-    If the user has been authorized before,
-    the existing token is returned.
-    """
-    data = json.loads(request.body)
-    username = data.get('username')
-    password = data.get('password')
-
-    user = User.objects.filter(username=username)
-    if user and check_password(password, user.first().password):
-        user = user.first()
-        token = Token.objects.filter(user=user).first()
-        token = Token.objects.create(user=user) if not token else token
-
-        return JsonResponse({'Token': f'{token}'})
-
-    return JsonResponse(['Invalid username or password'], safe=False,
-                        status=status.HTTP_401_UNAUTHORIZED)
