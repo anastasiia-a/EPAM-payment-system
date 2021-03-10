@@ -113,8 +113,8 @@ def see_wallets_or_create(request: WSGIRequest) -> JsonResponse:
         }
         try:
             Wallet.objects.create(**fields)
-            return JsonResponse(['The wallet created'], safe=False,
-                                status=status.HTTP_201_CREATED)
+            return JsonResponse([f'The wallet with id={wallet_pk + 1} created'],
+                                safe=False, status=status.HTTP_201_CREATED)
         except exceptions:
             return JsonResponse(['The wallet can not be created'], safe=False,
                                 status=status.HTTP_400_BAD_REQUEST)
